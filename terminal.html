@@ -41,19 +41,8 @@
         .box-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--neon); pointer-events: none; }
         .box-item span { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; }
 
-        /* UPDATED BRANDING POSITION (Moved away from corner) */
-        .branding { 
-            position: fixed; 
-            bottom: 30px; 
-            right: 40px; 
-            font-size: 10px; 
-            font-weight: 900; 
-            color: #444; 
-            letter-spacing: 1px; 
-            text-transform: uppercase; 
-            pointer-events: none; 
-            z-index: 5000; 
-        }
+        /* Branding Position - Adjusted away from corner */
+        .branding { position: fixed; bottom: 30px; right: 40px; font-size: 10px; font-weight: 900; color: #444; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; z-index: 5000; }
         .branding span { color: var(--neon); }
 
         /* Custom Confirm Box Styles */
@@ -183,11 +172,11 @@
                 <div class="apex-title" style="font-size: 20px;">Execution Rules</div>
                 <label>Trade Basis</label>
                 <div class="grid-2" style="margin-bottom: 20px;">
-                    <div class="box-item active-box" id="crtBox" onclick="toggleBasis('crt')"><input type="checkbox" id="crtCheck" checked><span>CRT</span></div>
+                    <div class="box-item" id="crtBox" onclick="toggleBasis('crt')"><input type="checkbox" id="crtCheck"><span>CRT</span></div>
                     <div class="box-item" id="keyBox" onclick="toggleBasis('key')"><input type="checkbox" id="keyCheck"><span>Key Level</span></div>
                 </div>
                 
-                <div id="crtContent">
+                <div id="crtContent" style="display:none;">
                     <label style="color:var(--neon)">CRT Confirmations</label>
                     <div class="grid-2">
                         <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>2nd Candle 50% Close</span></div>
@@ -198,7 +187,7 @@
                     </div>
                     <label style="margin-top:20px; color:var(--neon)">Geometry</label>
                     <div class="grid-2">
-                        <input type="number" id="cEntry" placeholder="Entry"><input type="number" id="cSL" placeholder="SL">
+                        <input type="number" id="cEntry Price" placeholder="Entry Price"><input type="number" id="cSL" placeholder="SL">
                         <input type="number" id="cTP" placeholder="TP"><input type="number" id="cLot" placeholder="Lot">
                     </div>
                     <div class="image-box" onclick="document.getElementById('imgInCRT').click()">
@@ -219,7 +208,7 @@
                     </div>
                     <label style="margin-top:20px; color:var(--blue)">Geometry</label>
                     <div class="grid-2">
-                        <input type="number" id="rEntry" placeholder="Price"><input type="number" id="rSL" placeholder="SL">
+                        <input type="number" id="rEntry" placeholder="Entry Price"><input type="number" id="rSL" placeholder="SL">
                         <input type="number" id="rTP" placeholder="TP"><input type="number" id="rLot" placeholder="Lot">
                     </div>
                     <div class="image-box" onclick="document.getElementById('imgIn').click()">
@@ -252,7 +241,6 @@
     </div>
 
     <script>
-        // Session Check
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
             window.location.href = "index.html";
         }
@@ -324,7 +312,6 @@
 
         function toggleBasis(type) {
             const isKey = (type === 'key');
-            document.getElementById('confirmBox').style.display = 'none'; 
             document.getElementById('crtCheck').checked = !isKey;
             document.getElementById('keyCheck').checked = isKey;
             document.getElementById('crtBox').classList.toggle('active-box', !isKey);
@@ -341,6 +328,20 @@
 
         function saveTrade() {
             const isKey = document.getElementById('keyCheck').checked;
+            const isCrt = document.getElementById('crtCheck').checked;
+            
+            // Logic to ensure one is selected
+            if(!isKey && !isCrt) {
+                const alert = document.getElementById('floatingAlert');
+                const msg = document.getElementById('alertMsg');
+                msg.innerText = "❌ PLEASE SELECT A BASIS (CRT OR KEY LEVEL)";
+                alert.style.color = "var(--danger)";
+                alert.style.borderColor = "var(--danger)";
+                alert.style.display = 'block';
+                setTimeout(() => alert.style.display = 'none', 3000);
+                return;
+            }
+
             const activeContent = isKey ? '#keyLevelContent' : '#crtContent';
             const unchecked = Array.from(document.querySelectorAll(activeContent + ' .conf-check')).filter(c => !c.checked).length;
             const alert = document.getElementById('floatingAlert');
@@ -395,6 +396,14 @@
             document.getElementById('imgTxt').innerText = "📷 Add Setup Picture";
             document.getElementById('imgTxtCRT').innerText = "📷 Add CRT Setup Picture";
             document.querySelectorAll('.conf-check').forEach(c => { c.checked = false; c.parentElement.classList.remove('active-box'); });
+            
+            // Reset Rules Page selection after save
+            document.getElementById('crtCheck').checked = false;
+            document.getElementById('keyCheck').checked = false;
+            document.getElementById('crtBox').classList.remove('active-box');
+            document.getElementById('keyBox').classList.remove('active-box');
+            document.getElementById('crtContent').style.display = 'none';
+            document.getElementById('keyLevelContent').style.display = 'none';
         }
 
         function updateJournal() {
