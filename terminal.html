@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apex Traders Pro - Dashboard</title>
-    
+      
     <link rel="icon" type="image/jpg" href="https://i.ibb.co/kg7Jf9bL/Modern-Letter-AS-Logo-Instagram-Post-jpg-1.jpg">
     <link rel="apple-touch-icon" href="https://i.ibb.co/kg7Jf9bL/Modern-Letter-AS-Logo-Instagram-Post-jpg-1.jpg">
    
@@ -302,6 +302,19 @@
 
         let trades = [], stats = { Win: 0, Loss: 0, BE: 0, Total: 0 }, activeIdx = null, imgData = "", multiplier = 10000;
 
+        // --- Persistent Storage Logic ---
+        function loadSavedData() {
+            const saved = localStorage.getItem("apex_trades_v1");
+            if (saved) {
+                trades = JSON.parse(saved);
+                updateJournal();
+            }
+        }
+
+        function persistData() {
+            localStorage.setItem("apex_trades_v1", JSON.stringify(trades));
+        }
+
         function showPage(p, btn) {
             document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -392,7 +405,7 @@
             
             document.querySelectorAll(activeContent + ' .conf-check:checked').forEach(c => confList.push(c.nextElementSibling.innerText));
             
-            // Corrected Value Fetching for CRT
+            // Fixed CRT Value Fetching
             const entryVal = isKey ? document.getElementById('rEntry').value : document.getElementById('cEntry').value;
             const tpVal = isKey ? document.getElementById('rTP').value : document.getElementById('cTP').value;
 
@@ -436,6 +449,7 @@
                 </div>
             `).join('');
             updateStats();
+            persistData(); // Always save on change
         }
 
         function updateStats() {
@@ -475,8 +489,12 @@
         function closeTradeModal() { document.getElementById('tradeModal').style.display = 'none'; }
         function processTrade(res) { trades[activeIdx].outcome = res; updateJournal(); closeTradeModal(); }
         function setAsset(m, el) { multiplier = m; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); analyze(); }
-        setInterval(() => { document.getElementById('timer').innerText = new Date().toLocaleTimeString(); }, 1000);
+        
+        // Final Init
+        window.onload = function() {
+            loadSavedData();
+            setInterval(() => { document.getElementById('timer').innerText = new Date().toLocaleTimeString(); }, 1000);
+        };
     </script>
 </body>
 </html>
-
