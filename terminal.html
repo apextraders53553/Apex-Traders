@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Traders Pro - Dashboard</title>
+    <style>
+        :root { --neon: #00ff88; --bg: #050505; --card: #111; --danger: #ff3e3e; --border: #222; --side: #0a0a0a; --blue: #00d1ff; --warning: #ffcc00; }
+        * { box-sizing: border-box; transition: 0.3s; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar & Layout */
+        .sidebar { width: 220px; background: var(--side); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; z-index: 10; }
+        .nav-brand { font-size: 18px; font-weight: 900; color: var(--neon); letter-spacing: 2px; margin-bottom: 40px; text-align: center; }
+        .nav-links { flex-grow: 1; }
+        .nav-btn { width: 100%; background: transparent; border: 1px solid transparent; color: #666; padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; margin-bottom: 10px; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { color: #fff; background: #151515; }
+        .nav-btn.active { background: #00ff8810; color: var(--neon); border-color: var(--neon); }
+        
+        /* Logout Specific Style */
+        .logout-btn { color: var(--danger) !important; margin-top: auto; border: 1px solid transparent; }
+        .logout-btn:hover { background: #ff3e3e10 !important; border-color: var(--danger) !important; }
+
+        /* Main Content */
+        .main-content { flex: 1; position: relative; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; }
+        .page { display: none; width: 100%; max-width: 480px; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Components */
+        .terminal, .rules-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); width: 100%; }
+        .apex-title { font-size: 26px; font-weight: 900; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px var(--neon); text-transform: uppercase; text-align: center; margin: 0 0 20px 0; }
+        label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 8px 0; display: block; font-weight: bold; }
+        input { width: 100%; background: #161616; border: 1px solid #282828; padding: 12px; border-radius: 8px; color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
+
+        /* Grid & Boxes */
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .box-item { background: #0a0a0a; border: 1px solid var(--border); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .box-item.active-box { border-color: var(--neon); background: #00ff8805; }
+        .box-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--neon); pointer-events: none; }
+        .box-item span { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; }
+
+        /* Branding Overlay */
+        .branding { position: fixed; bottom: 15px; right: 20px; font-size: 10px; font-weight: 900; color: #444; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; z-index: 5000; }
+        .branding span { color: var(--neon); }
+
+        /* Custom Confirm Box Styles */
+        #confirmBox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 7000; }
+        .confirm-content { background: var(--card); border: 1px solid var(--danger); padding: 30px; border-radius: 15px; text-align: center; max-width: 320px; width: 90%; animation: popIn 0.3s ease; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .confirm-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .confirm-btn { padding: 12px; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+
+        /* Alerts & Risk Decision UI */
+        #floatingAlert { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; padding: 15px 30px; border-radius: 10px; font-weight: 900; font-size: 14px; display: none; backdrop-filter: blur(10px); border: 2px solid transparent; box-shadow: 0 0 20px rgba(0,0,0,0.5); text-align: center; }
+        #riskDecisionUI { display: none; margin-top: 15px; gap: 10px; justify-content: center; }
+        .decide-btn { padding: 8px 20px; border-radius: 5px; border: none; font-weight: 900; cursor: pointer; font-size: 12px; }
+        #errorArea { color: var(--danger); font-weight: 900; font-size: 18px; display: none; margin-top: 10px; }
+
+        /* Modal Details */
+        #tradeModal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; display:none; justify-content:center; align-items:center; overflow-y: auto; }
+        .modal-content { background:var(--card); border: 1px solid var(--border); border-radius:15px; width:95%; max-width:450px; padding:25px; margin: 20px auto; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 12px; }
+        .conf-tag { background: #111; padding: 4px 8px; border-radius: 4px; border: 1px solid #333; font-size: 10px; color: var(--neon); margin: 2px; display: inline-block; }
+        .outcome-btns { display:none; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:15px; }
+
+        .chip { background: #1a1a1a; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 11px; color: #666; font-weight: bold; }
+        .chip.active { background: #00ff8815; color: var(--neon); border-color: var(--neon); }
+        .save-btn { width: 100%; background: var(--neon); color: #000; border: none; padding: 16px; border-radius: 8px; font-weight: 900; cursor: pointer; margin-top: 25px; }
+        
+        .journal-item { background: #161616; padding: 15px; border-radius: 8px; border-left: 4px solid var(--neon); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .journal-actions { display: flex; gap: 8px; }
+        .view-btn { background: #222; border: 1px solid #333; color: var(--neon); padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+        .del-btn { background: #222; border: 1px solid #333; color: var(--danger); padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; }
+        .image-box { border: 2px dashed #222; border-radius: 10px; padding: 25px; text-align: center; margin-top: 20px; color: #444; cursor: pointer; font-size: 13px; font-weight: bold; }
+        
+        /* New View Attachment Button Style */
+        .view-attachment-btn { width: 100%; background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+        .view-attachment-btn:hover { background: #00d1ff10; }
+    </style>
+</head>
+<body>
+
+    <div class="branding">Develop by: <span>Ryzen Trader</span></div>
+
+    <div id="confirmBox">
+        <div class="confirm-content">
+            <div id="confirmIcon" style="font-size: 35px; margin-bottom: 10px;">⚠️</div>
+            <div id="confirmTitle" style="font-weight: 900; color: #fff; font-size: 16px; letter-spacing: 1px;">ARE YOU SURE?</div>
+            <div id="confirmDesc" style="color: #666; font-size: 11px; margin-top: 5px;">This action cannot be undone.</div>
+            <div class="confirm-btns">
+                <button class="confirm-btn" style="background: #222; color: #fff;" onclick="closeConfirm()">CANCEL</button>
+                <button class="confirm-btn" style="background: var(--danger); color: #fff;" id="confirmActionBtn">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="floatingAlert">
+        <div id="alertMsg"></div>
+        <div id="riskDecisionUI">
+            <div style="margin-bottom: 10px; color: #fff;">Record to journal anyway?</div>
+            <button class="decide-btn" style="background: var(--neon); color: #000;" onclick="confirmSave(true)">YES, RECORD</button>
+            <button class="decide-btn" style="background: var(--danger); color: #fff;" onclick="confirmSave(false)">NO, CANCEL</button>
+        </div>
+    </div>
+
+    <div id="tradeModal">
+        <div class="modal-content">
+            <span style="float:right; cursor:pointer; font-size: 20px; color:#555;" onclick="closeTradeModal()">✕</span>
+            <div class="apex-title" style="font-size: 16px; text-align: left;">Full Trade Analysis</div>
+            <div id="modalDetails">
+                <div class="detail-row"><span>Log Time:</span> <b id="mDT" style="color:#fff"></b></div>
+                <div class="detail-row"><span>Setup:</span> <b id="mType" style="color:var(--blue)"></b></div>
+                <div class="detail-row"><span>Entry:</span> <b id="mEntry" style="color:#fff"></b></div>
+                <div class="detail-row"><span>TP Target:</span> <b id="mTP" style="color:var(--neon)"></b></div>
+            </div>
+            <label style="margin-top:15px; color:#555;">Confirmations Taken</label>
+            <div id="modalConfs"></div>
+            
+            <button id="viewImgBtn" class="view-attachment-btn" onclick="openAttachedImage()">🖼️ View Attached Image</button>
+            
+            <label id="beforeLabel" style="color:var(--blue); margin-top: 20px; cursor: pointer; text-align: center; display: block; border: 1px solid #333; padding: 12px; border-radius: 8px;" onclick="document.getElementById('outcomeArea').style.display='grid'">► MARK OUTCOME</label>
+            <div class="outcome-btns" id="outcomeArea">
+                <button onclick="processTrade('Win')" style="background:var(--neon); padding:10px; border:none; border-radius:4px; font-weight:900; cursor:pointer;">WIN</button>
+                <button onclick="processTrade('Loss')" style="background:var(--danger); padding:10px; border:none; border-radius:4px; font-weight:900; color:#fff; cursor:pointer;">LOSS</button>
+                <button onclick="processTrade('BE')" style="background:#555; padding:10px; border:none; border-radius:4px; font-weight:900; color:#fff; cursor:pointer;">BE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="nav-brand">APEX PRO</div>
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="showPage('calcPage', this)">📊 Calculator</button>
+            <button class="nav-btn" onclick="showPage('rulesPage', this)">⚖️ Rules</button>
+            <button class="nav-btn" onclick="showPage('analyticsPage', this)">📈 Analytics</button>
+            <button class="nav-btn" onclick="showPage('journalPage', this)">📓 Journal</button>
+        </div>
+        <button class="nav-btn logout-btn" onclick="logout()">🔒 Logout</button>
+    </div>
+
+    <div class="main-content">
+        <div id="calcPage" class="page active">
+            <div class="terminal">
+                <div class="apex-title">Apex Traders</div>
+                <div style="text-align: right;"><span id="timer" style="font-size: 11px; color: var(--neon); font-family: monospace;">00:00:00</span></div>
+                <label>Asset Class</label>
+                <div class="grid-3">
+                    <div class="chip active" onclick="setAsset(10000, this)">FOREX</div>
+                    <div class="chip" onclick="setAsset(10, this)">GOLD</div>
+                    <div class="chip" onclick="setAsset(1, this)">INDICES</div>
+                </div>
+                <div class="grid-2">
+                    <div><label>Balance ($)</label><input type="number" id="acc" value="1000" oninput="analyze()"></div>
+                    <div><label>Risk (%)</label><input type="number" id="riskIn" value="1" step="0.5" oninput="analyze()"></div>
+                </div>
+                <label>Geometry</label>
+                <div class="grid-3"><input type="number" id="entry" placeholder="E" oninput="analyze()"><input type="number" id="sl" placeholder="S" oninput="analyze()"><input type="number" id="tp" placeholder="T" oninput="analyze()"></div>
+                <div style="background:#000; border-radius:10px; padding:20px; text-align:center; border:1px solid var(--border); margin-top:20px;">
+                    <div id="outputArea"><label style="color:var(--neon); opacity:0.6;">LOT SIZE</label><br><span id="bigLot" style="font-size:52px; font-weight:900; color:var(--neon);">0.00</span></div>
+                    <div id="errorArea">⚠️ MAX RISK 5%</div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:13px; color:#888;">
+                    <span>Risk: <b id="riskCash" style="color:var(--danger)">$10</b></span>
+                    <span>RR: <b id="rrVal" style="color:var(--neon)">1:0.0</b></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="rulesPage" class="page">
+            <div class="rules-card">
+                <div class="apex-title" style="font-size: 20px;">Execution Rules</div>
+                <label>Trade Basis</label>
+                <div class="grid-2" style="margin-bottom: 20px;">
+                    <div class="box-item active-box" id="crtBox" onclick="toggleBasis('crt')"><input type="checkbox" id="crtCheck" checked><span>CRT</span></div>
+                    <div class="box-item" id="keyBox" onclick="toggleBasis('key')"><input type="checkbox" id="keyCheck"><span>Key Level</span></div>
+                </div>
+                
+                <div id="crtContent">
+                    <label style="color:var(--neon)">CRT Confirmations</label>
+                    <div class="grid-2">
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>2nd Candle 50% Close</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>Direction Change</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>TWS / TBS</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>LTF MSS Shift</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>Mark FVG / OB</span></div>
+                    </div>
+                    <label style="margin-top:20px; color:var(--neon)">Geometry</label>
+                    <div class="grid-2">
+                        <input type="number" id="cEntry" placeholder="Entry"><input type="number" id="cSL" placeholder="SL">
+                        <input type="number" id="cTP" placeholder="TP"><input type="number" id="cLot" placeholder="Lot">
+                    </div>
+                    <div class="image-box" onclick="document.getElementById('imgInCRT').click()">
+                        <div id="imgTxtCRT">📷 Add CRT Setup Picture</div>
+                        <input type="file" id="imgInCRT" hidden onchange="handleImg(this, 'crt')">
+                    </div>
+                </div>
+
+                <div id="keyLevelContent" style="display:none;">
+                    <label style="color:var(--blue)">Confirmations</label>
+                    <div class="grid-2">
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>HTF PD Array</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>LTF Key Level</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>TWS, TBS</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>MSS</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>CSID</span></div>
+                        <div class="box-item" onclick="toggleConf(this)"><input type="checkbox" class="conf-check"><span>SMT</span></div>
+                    </div>
+                    <label style="margin-top:20px; color:var(--blue)">Geometry</label>
+                    <div class="grid-2">
+                        <input type="number" id="rEntry" placeholder="Price"><input type="number" id="rSL" placeholder="SL">
+                        <input type="number" id="rTP" placeholder="TP"><input type="number" id="rLot" placeholder="Lot">
+                    </div>
+                    <div class="image-box" onclick="document.getElementById('imgIn').click()">
+                        <div id="imgTxt">📷 Add Setup Picture</div>
+                        <input type="file" id="imgIn" hidden onchange="handleImg(this, 'key')">
+                    </div>
+                </div>
+                <button class="save-btn" onclick="saveTrade()">RECORD TRADE</button>
+            </div>
+        </div>
+
+        <div id="analyticsPage" class="page">
+            <div class="rules-card" style="text-align:center;">
+                <label>Win Rate</label>
+                <div id="winRateDisp" style="font-size:48px; font-weight:900; color:var(--neon); margin:20px 0;">0%</div>
+                <div style="display:flex; align-items:flex-end; justify-content:space-around; height:120px; padding-bottom:10px; border-bottom:1px solid #222;">
+                    <div class="bar-wrap"><div id="barWin" style="width:25px; background:var(--neon); height:2px; border-radius:4px 4px 0 0;"></div><span style="font-size:10px; color:#555;">WINS</span></div>
+                    <div class="bar-wrap"><div id="barLoss" style="width:25px; background:var(--danger); height:2px; border-radius:4px 4px 0 0;"></div><span style="font-size:10px; color:#555;">LOSS</span></div>
+                    <div class="bar-wrap"><div id="barBE" style="width:25px; background:#555; height:2px; border-radius:4px 4px 0 0;"></div><span style="font-size:10px; color:#555;">BE</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="journalPage" class="page">
+            <div class="rules-card">
+                <div class="apex-title" style="font-size: 20px;">Journal History</div>
+                <div id="journalList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "index.html";
+        }
+
+        // --- CUSTOM CONFIRMATION LOGIC ---
+        let confirmCallback = null;
+        function showConfirm(title, desc, icon, callback) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmDesc').innerText = desc;
+            document.getElementById('confirmIcon').innerText = icon;
+            document.getElementById('confirmBox').style.display = 'flex';
+            confirmCallback = callback;
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmBox').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmActionBtn').onclick = function() {
+            if(confirmCallback) confirmCallback();
+            closeConfirm();
+        };
+
+        function logout() {
+            showConfirm("LOGOUT?", "Are you sure you want to end session?", "🔒", () => {
+                sessionStorage.removeItem("isLoggedIn");
+                window.location.href = "index.html";
+            });
+        }
+
+        function deleteTrade(i) {
+            showConfirm("DELETE ENTRY?", "This action cannot be undone.", "⚠️", () => {
+                trades.splice(i, 1);
+                updateJournal();
+            });
+        }
+
+        let trades = [], stats = { Win: 0, Loss: 0, BE: 0, Total: 0 }, activeIdx = null, imgData = "", multiplier = 10000;
+
+        function showPage(p, btn) {
+            document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(p).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function handleImg(input, mode) {
+            const reader = new FileReader();
+            reader.onload = (e) => { 
+                imgData = e.target.result; 
+                if(mode === 'crt') document.getElementById('imgTxtCRT').innerText = "Image Ready ✅";
+                else document.getElementById('imgTxt').innerText = "Image Ready ✅";
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function analyze() {
+            const acc = parseFloat(document.getElementById('acc').value) || 0, risk = parseFloat(document.getElementById('riskIn').value) || 0;
+            const e = parseFloat(document.getElementById('entry').value) || 0, s = parseFloat(document.getElementById('sl').value) || 0, t = parseFloat(document.getElementById('tp').value) || 0;
+            if (risk > 5) { document.getElementById('outputArea').style.display = 'none'; document.getElementById('errorArea').style.display = 'block'; }
+            else { document.getElementById('outputArea').style.display = 'block'; document.getElementById('errorArea').style.display = 'none'; }
+            document.getElementById('riskCash').innerText = "$" + (acc * risk / 100).toFixed(0);
+            if(e && s && e != s) {
+                let lot = (acc * risk / 100) / (Math.abs(e-s) * 10);
+                document.getElementById('bigLot').innerText = lot.toFixed(2);
+                if(t) document.getElementById('rrVal').innerText = "1:" + (Math.abs(t-e)/Math.abs(e-s)).toFixed(1);
+            }
+        }
+
+        function toggleBasis(type) {
+            const isKey = (type === 'key');
+            document.getElementById('confirmBox').style.display = 'none'; 
+            document.getElementById('crtCheck').checked = !isKey;
+            document.getElementById('keyCheck').checked = isKey;
+            document.getElementById('crtBox').classList.toggle('active-box', !isKey);
+            document.getElementById('keyBox').classList.toggle('active-box', isKey);
+            document.getElementById('keyLevelContent').style.display = isKey ? 'block' : 'none';
+            document.getElementById('crtContent').style.display = isKey ? 'none' : 'block';
+        }
+
+        function toggleConf(el) {
+            const cb = el.querySelector('input');
+            cb.checked = !cb.checked;
+            el.classList.toggle('active-box', cb.checked);
+        }
+
+        function saveTrade() {
+            const isKey = document.getElementById('keyCheck').checked;
+            const activeContent = isKey ? '#keyLevelContent' : '#crtContent';
+            const unchecked = Array.from(document.querySelectorAll(activeContent + ' .conf-check')).filter(c => !c.checked).length;
+            const alert = document.getElementById('floatingAlert');
+            const msg = document.getElementById('alertMsg');
+            const ui = document.getElementById('riskDecisionUI');
+            
+            if (unchecked >= 1) {
+                msg.innerText = unchecked === 1 ? "⚠️ ONE MORE STEP! SECURE THE CONFLUENCE." : "❌ HIGH RISK! WAIT FOR ALL CONFIRMATIONS.";
+                alert.style.color = unchecked === 1 ? "var(--warning)" : "var(--danger)";
+                alert.style.borderColor = unchecked === 1 ? "var(--warning)" : "var(--danger)";
+                alert.style.display = 'block'; ui.style.display = 'flex';
+                return;
+            }
+            executeSave();
+        }
+
+        function confirmSave(choice) {
+            document.getElementById('riskDecisionUI').style.display = 'none';
+            if(choice) { executeSave(); }
+            else { document.getElementById('floatingAlert').style.display = 'none'; }
+        }
+
+        function executeSave() {
+            const isKey = document.getElementById('keyCheck').checked;
+            const alert = document.getElementById('floatingAlert');
+            const msg = document.getElementById('alertMsg');
+            const confList = [];
+            const activeContent = isKey ? '#keyLevelContent' : '#crtContent';
+            
+            document.querySelectorAll(activeContent + ' .conf-check:checked').forEach(c => confList.push(c.nextElementSibling.innerText));
+            
+            const entryVal = isKey ? document.getElementById('rEntry').value : document.getElementById('cEntry').value;
+            const tpVal = isKey ? document.getElementById('rTP').value : document.getElementById('cTP').value;
+
+            trades.push({
+                type: isKey ? "Key Level" : "CRT",
+                entry: entryVal || 'N/A',
+                tp: tpVal || 'N/A',
+                dt: new Date().toLocaleString(),
+                confs: confList,
+                img: imgData,
+                outcome: null
+            });
+
+            msg.innerText = "✅ RECORDED!";
+            alert.style.color = "var(--neon)"; alert.style.borderColor = "var(--neon)";
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 2000);
+            
+            updateJournal();
+            imgData = ""; 
+            document.getElementById('imgTxt').innerText = "📷 Add Setup Picture";
+            document.getElementById('imgTxtCRT').innerText = "📷 Add CRT Setup Picture";
+            document.querySelectorAll('.conf-check').forEach(c => { c.checked = false; c.parentElement.classList.remove('active-box'); });
+        }
+
+        function updateJournal() {
+            document.getElementById('journalList').innerHTML = trades.map((t, i) => `
+                <div class="journal-item" style="border-left-color:${t.outcome=='Win'?'var(--neon)':t.outcome=='Loss'?'var(--danger)':'#555'}">
+                    <span style="font-size:12px;"><b>${t.type}</b> (${t.entry})</span>
+                    <div class="journal-actions">
+                        <button class="view-btn" onclick="viewTrade(${i})">VIEW</button>
+                        <button class="del-btn" onclick="deleteTrade(${i})">DEL</button>
+                    </div>
+                </div>
+            `).join('');
+            updateStats();
+        }
+
+        function updateStats() {
+            stats = { Win: 0, Loss: 0, BE: 0, Total: 0 };
+            trades.forEach(t => { if(t.outcome) { stats[t.outcome]++; if(t.outcome !== 'BE') stats.Total++; } });
+            document.getElementById('winRateDisp').innerText = stats.Total ? Math.round(stats.Win/stats.Total*100) + "%" : "0%";
+            const max = Math.max(stats.Win, stats.Loss, stats.BE, 1);
+            document.getElementById('barWin').style.height = (stats.Win/max*100) + "px";
+            document.getElementById('barLoss').style.height = (stats.Loss/max*100) + "px";
+            document.getElementById('barBE').style.height = (stats.BE/max*100) + "px";
+        }
+
+        function viewTrade(i) {
+            activeIdx = i; const t = trades[i];
+            document.getElementById('mDT').innerText = t.dt;
+            document.getElementById('mType').innerText = t.type;
+            document.getElementById('mEntry').innerText = t.entry;
+            document.getElementById('mTP').innerText = t.tp;
+            document.getElementById('modalConfs').innerHTML = t.confs.length ? t.confs.map(c => `<span class="conf-tag">${c}</span>`).join('') : '<small style="color:#444">None</small>';
+            
+            // Show or hide the attachment button based on data
+            const btn = document.getElementById('viewImgBtn');
+            btn.style.display = t.img ? 'block' : 'none';
+
+            document.getElementById('beforeLabel').style.display = t.outcome ? 'none' : 'block';
+            document.getElementById('outcomeArea').style.display = 'none';
+            document.getElementById('tradeModal').style.display = 'flex';
+        }
+
+        // New function to open image in new tab
+        function openAttachedImage() {
+            const t = trades[activeIdx];
+            if (t && t.img) {
+                const newTab = window.open();
+                newTab.document.write(`<body style="margin:0; background:#050505; display:flex; align-items:center; justify-content:center;"><img src="${t.img}" style="max-width:100%; height:auto;"></body>`);
+            }
+        }
+
+        function closeTradeModal() { document.getElementById('tradeModal').style.display = 'none'; }
+        function processTrade(res) { trades[activeIdx].outcome = res; updateJournal(); closeTradeModal(); }
+        function setAsset(m, el) { multiplier = m; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); analyze(); }
+        setInterval(() => { document.getElementById('timer').innerText = new Date().toLocaleTimeString(); }, 1000);
+    </script>
+</body>
+</html>

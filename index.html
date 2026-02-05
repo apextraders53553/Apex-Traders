@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Trader - Login</title>
+   
+    <link rel="icon" type="image/jpg" href="https://i.ibb.co/kg7Jf9bL/Modern-Letter-AS-Logo-Instagram-Post-jpg-1.jpg">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/kg7Jf9bL/Modern-Letter-AS-Logo-Instagram-Post-jpg-1.jpg">
+   
+    <style>
+        :root { --neon: #00ff88; --bg: #050505; --card: #111; --border: #222; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+       
+        .login-terminal {
+            background: var(--card);
+            width: 100%;
+            max-width: 360px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+        }
+       
+        .header { text-align: center; margin-bottom: 25px; }
+        .brand-logo { width: 70px; height: 70px; border-radius: 50%; margin-bottom: 15px; border: 1px solid var(--neon); box-shadow: 0 0 15px rgba(0, 255, 136, 0.3); object-fit: cover; }
+       
+        .apex-title { font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #fff; text-shadow: 0 0 8px var(--neon); text-transform: uppercase; margin: 0; }
+        .status-bar { font-size: 9px; color: var(--neon); font-family: 'JetBrains Mono', monospace; margin-top: 8px; opacity: 0.6; text-transform: uppercase; }
+
+        label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; font-weight: bold; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            background: #161616;
+            border: 1px solid #282828;
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 15px;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+            transition: 0.2s;
+        }
+        input:focus { border-color: var(--neon); }
+
+        .remember-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .remember-container input { cursor: pointer; accent-color: var(--neon); }
+
+        .auth-btn {
+            width: 100%;
+            background: var(--neon);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.3s ease;
+        }
+        .auth-btn:hover { background: #00d672; transform: scale(1.02); }
+       
+        .footer-credit { margin-top: 20px; text-align: center; border-top: 1px solid #222; padding-top: 15px; }
+        .credit-text { font-size: 9px; color: #444; letter-spacing: 1px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="login-terminal">
+    <div class="header">
+        <img src="https://i.ibb.co/kg7Jf9bL/Modern-Letter-AS-Logo-Instagram-Post-jpg-1.jpg" alt="Logo" class="brand-logo">
+        <div class="apex-title">Apex Trader</div>
+        <div class="status-bar">● System: Awaiting Authentication</div>
+    </div>
+
+    <form id="authForm">
+        <label>Operator ID</label>
+        <input type="text" id="operatorID" placeholder="Enter Username" required>
+
+        <label>Access Key</label>
+        <input type="password" id="accessKey" placeholder="••••••••" required>
+
+        <label class="remember-container">
+            <input type="checkbox" id="rememberMe"> Remember Me
+        </label>
+
+        <button type="submit" class="auth-btn">Establish Connection</button>
+    </form>
+
+    <div class="footer-credit">
+        <span class="credit-text">Developed by: <b style="color: #666;">Ryzen Trader</b></span>
+    </div>
+</div>
+
+<script>
+    // Load saved credentials on page start
+    window.onload = function() {
+        const savedID = localStorage.getItem("savedOperatorID");
+        const savedPass = localStorage.getItem("savedAccessKey");
+        if (savedID && savedPass) {
+            document.getElementById("operatorID").value = savedID;
+            document.getElementById("accessKey").value = savedPass;
+            document.getElementById("rememberMe").checked = true;
+        }
+    };
+
+    document.getElementById('authForm').onsubmit = async function(e) {
+        e.preventDefault();
+       
+        const btn = document.querySelector('.auth-btn');
+        const statusBar = document.querySelector('.status-bar');
+        const email = document.getElementById('operatorID').value;
+        const pass = document.getElementById('accessKey').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeMoKDTWpO7yLd-xQWUjJyGAP_fK7yy9uyBmKr_ze59Ts1Ti8LlsJ_w8AsnnnZEvq6/exec';
+
+        btn.innerText = "VERIFYING...";
+        btn.disabled = true;
+        statusBar.innerText = "● Status: AUTHENTICATING...";
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ email: email, password: pass })
+            });
+            const data = await response.json();
+
+            if (data.result === "success") {
+                // Save or Remove both ID and Password
+                if (rememberMe) {
+                    localStorage.setItem("savedOperatorID", email);
+                    localStorage.setItem("savedAccessKey", pass);
+                } else {
+                    localStorage.removeItem("savedOperatorID");
+                    localStorage.removeItem("savedAccessKey");
+                }
+
+                statusBar.innerText = "● Status: ACCESS GRANTED";
+                statusBar.style.color = "#00ff88";
+                sessionStorage.setItem("isLoggedIn", "true");
+               
+                setTimeout(() => {
+                    window.location.href = "terminal.html";
+                }, 1000);
+
+            } else {
+                statusBar.innerText = "● Status: ACCESS DENIED";
+                statusBar.style.color = "#ff3e3e";
+                btn.innerText = "RETRY CONNECTION";
+                btn.disabled = false;
+            }
+        } catch (error) {
+            statusBar.innerText = "● Status: CONNECTION ERROR";
+            btn.innerText = "TRY AGAIN";
+            btn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>
