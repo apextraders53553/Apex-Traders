@@ -41,8 +41,19 @@
         .box-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--neon); pointer-events: none; }
         .box-item span { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; }
 
-        /* Branding Overlay */
-        .branding { position: fixed; bottom: 15px; right: 20px; font-size: 10px; font-weight: 900; color: #444; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; z-index: 5000; }
+        /* UPDATED BRANDING POSITION (Moved away from corner) */
+        .branding { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 40px; 
+            font-size: 10px; 
+            font-weight: 900; 
+            color: #444; 
+            letter-spacing: 1px; 
+            text-transform: uppercase; 
+            pointer-events: none; 
+            z-index: 5000; 
+        }
         .branding span { color: var(--neon); }
 
         /* Custom Confirm Box Styles */
@@ -75,14 +86,13 @@
         .del-btn { background: #222; border: 1px solid #333; color: var(--danger); padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; }
         .image-box { border: 2px dashed #222; border-radius: 10px; padding: 25px; text-align: center; margin-top: 20px; color: #444; cursor: pointer; font-size: 13px; font-weight: bold; }
         
-        /* New View Attachment Button Style */
         .view-attachment-btn { width: 100%; background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
         .view-attachment-btn:hover { background: #00d1ff10; }
     </style>
 </head>
 <body>
 
-    <div class="branding">DEVELOPED BY:<span>RYZEN TRADER</span></div>
+    <div class="branding">Developed by: <span>Ryzen Trader</span></div>
 
     <div id="confirmBox">
         <div class="confirm-content">
@@ -242,11 +252,11 @@
     </div>
 
     <script>
+        // Session Check
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
             window.location.href = "index.html";
         }
 
-        // --- CUSTOM CONFIRMATION LOGIC ---
         let confirmCallback = null;
         function showConfirm(title, desc, icon, callback) {
             document.getElementById('confirmTitle').innerText = title;
@@ -418,7 +428,6 @@
             document.getElementById('mTP').innerText = t.tp;
             document.getElementById('modalConfs').innerHTML = t.confs.length ? t.confs.map(c => `<span class="conf-tag">${c}</span>`).join('') : '<small style="color:#444">None</small>';
             
-            // Show or hide the attachment button based on data
             const btn = document.getElementById('viewImgBtn');
             btn.style.display = t.img ? 'block' : 'none';
 
@@ -427,7 +436,6 @@
             document.getElementById('tradeModal').style.display = 'flex';
         }
 
-        // New function to open image in new tab
         function openAttachedImage() {
             const t = trades[activeIdx];
             if (t && t.img) {
@@ -443,5 +451,3 @@
     </script>
 </body>
 </html>
-
-
