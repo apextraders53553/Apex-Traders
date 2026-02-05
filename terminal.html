@@ -45,7 +45,6 @@
         .branding { position: fixed; bottom: 30px; right: 40px; font-size: 10px; font-weight: 900; color: #444; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; z-index: 50; }
         .branding span { color: var(--neon); }
 
-        /* Custom Confirm Box Styles */
         #confirmBox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 7000; }
         .confirm-content { background: var(--card); border: 1px solid var(--danger); padding: 30px; border-radius: 15px; text-align: center; max-width: 320px; width: 90%; animation: popIn 0.3s ease; }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -76,7 +75,6 @@
         .view-attachment-btn { width: 100%; background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
         .view-attachment-btn:hover { background: #00d1ff10; }
 
-        /* Mobile Optimization Media Queries */
         @media (max-width: 768px) {
             .menu-toggle { display: block; }
             .sidebar { position: fixed; left: -220px; height: 100%; transition: 0.4s ease; }
@@ -197,7 +195,7 @@
                     </div>
                     <label style="margin-top:20px; color:var(--neon)">Geometry</label>
                     <div class="grid-2">
-                        <input type="number" id="cEntry Price" placeholder="Entry Price"><input type="number" id="cSL" placeholder="SL">
+                        <input type="number" id="cEntry" placeholder="Entry Price"><input type="number" id="cSL" placeholder="SL">
                         <input type="number" id="cTP" placeholder="TP"><input type="number" id="cLot" placeholder="Lot">
                     </div>
                     <div class="image-box" onclick="document.getElementById('imgInCRT').click()">
@@ -255,7 +253,6 @@
             window.location.href = "index.html";
         }
 
-        // Sidebar Navigation for Mobile
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
         }
@@ -306,7 +303,7 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(p).classList.add('active');
             btn.classList.add('active');
-            closeSidebar(); // Close sidebar after selecting page on mobile
+            closeSidebar();
         }
 
         function handleImg(input, mode) {
@@ -388,9 +385,13 @@
             const msg = document.getElementById('alertMsg');
             const confList = [];
             const activeContent = isKey ? '#keyLevelContent' : '#crtContent';
+            
             document.querySelectorAll(activeContent + ' .conf-check:checked').forEach(c => confList.push(c.nextElementSibling.innerText));
+            
+            // Corrected Value Fetching for CRT
             const entryVal = isKey ? document.getElementById('rEntry').value : document.getElementById('cEntry').value;
             const tpVal = isKey ? document.getElementById('rTP').value : document.getElementById('cTP').value;
+
             trades.push({
                 type: isKey ? "Key Level" : "CRT",
                 entry: entryVal || 'N/A',
@@ -400,15 +401,18 @@
                 img: imgData,
                 outcome: null
             });
+
             msg.innerText = "✅ RECORDED!";
             alert.style.color = "var(--neon)"; alert.style.borderColor = "var(--neon)";
             alert.style.display = 'block';
             setTimeout(() => alert.style.display = 'none', 2000);
+            
             updateJournal();
             imgData = ""; 
             document.getElementById('imgTxt').innerText = "📷 Add Setup Picture";
             document.getElementById('imgTxtCRT').innerText = "📷 Add CRT Setup Picture";
             document.querySelectorAll('.conf-check').forEach(c => { c.checked = false; c.parentElement.classList.remove('active-box'); });
+            
             document.getElementById('crtCheck').checked = false;
             document.getElementById('keyCheck').checked = false;
             document.getElementById('crtBox').classList.remove('active-box');
@@ -447,8 +451,10 @@
             document.getElementById('mEntry').innerText = t.entry;
             document.getElementById('mTP').innerText = t.tp;
             document.getElementById('modalConfs').innerHTML = t.confs.length ? t.confs.map(c => `<span class="conf-tag">${c}</span>`).join('') : '<small style="color:#444">None</small>';
+            
             const btn = document.getElementById('viewImgBtn');
             btn.style.display = t.img ? 'block' : 'none';
+
             document.getElementById('beforeLabel').style.display = t.outcome ? 'none' : 'block';
             document.getElementById('outcomeArea').style.display = 'none';
             document.getElementById('tradeModal').style.display = 'flex';
